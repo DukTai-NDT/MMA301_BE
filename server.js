@@ -6,7 +6,7 @@ app.use(express.json());
 connectDB();
 app.get("/", async (req, res) => {
   try {
-    res.send({ message: "Welcome to Practical Exam!" });
+    res.send({ message: "Minh Dep Trai nhat the gioi" });
   } catch (error) {
     res.send({ error: error.message });
   }
