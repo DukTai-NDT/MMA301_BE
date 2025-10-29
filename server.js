@@ -1,18 +1,48 @@
+require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const connectDB = require("./config/db.js");
-const app = express();
 
-app.use(express.json());
+const app = express();
 connectDB();
-app.get("/", async (req, res) => {
-  try {
-    res.send({ message: "Welcome to Practical Exam!" });
-  } catch (error) {
-    res.send({ error: error.message });
-  }
+
+// Body parsers
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+const allowedOrigins = (
+  process.env.CORS_ORIGINS ||
+  "http://localhost:3000,http://localhost:5173,http://localhost:4200"
+)
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  allowedHeaders: "Content-Type,Authorization",
+};
+app.use(cors(corsOptions));
+
+// API routes
+app.use("/api/auth", require("./src/routes/auth"));
+
+// Simple health endpoint to test connectivity from phone browser
+app.get("/", (req, res) => {
+  res.json({ ok: true, service: "mma301_be", time: new Date().toISOString() });
 });
 
-app.use("/api/auth", require("./src/routes/auth"));
+app.use((err, req, res, next) => {
+  const status = err.status || 500;
+  const message = err.message || "Internal Server Error";
+  res.status(status).json({ message });
+});
 
 const PORT = process.env.PORT || 9999;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
