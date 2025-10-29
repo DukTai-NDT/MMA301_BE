@@ -32,7 +32,11 @@ app.use(cors(corsOptions));
 
 // API routes
 app.use("/api/auth", require("./src/routes/auth"));
+const venueRoutes = require('./src/routes/venue.js');
+const subPitchRoutes = require('./src/routes/subPitchRoutes.js');
 
+app.use('/owner/venues', venueRoutes);
+app.use('/owner/sub-pitches', subPitchRoutes);
 // Simple health endpoint to test connectivity from phone browser
 app.get("/", (req, res) => {
   res.json({ ok: true, service: "mma301_be", time: new Date().toISOString() });

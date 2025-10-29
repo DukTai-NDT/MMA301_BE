@@ -6,8 +6,8 @@ const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body || {};
-    if (!name || !email || !password || !phone) {
+    const { name, email, password, phone} = req.body || {};
+    if (!name || !email || !password ) {
       return res
         .status(400)
         .json({ message: "Thiếu name/email/password/phone" });
