@@ -1,9 +1,7 @@
 const Venue = require("../models/Venue");
 const SubPitch = require("../models/SubPitch");
 
-// ==========================
-// UC-VENUE-LIST-01
-// ==========================
+
 const listVenues = async (req, res) => {
   try {
     const { search, type, lat, lng, radius, minPrice, maxPrice, minRating } = req.query;
@@ -71,9 +69,7 @@ const listVenues = async (req, res) => {
   }
 };
 
-// ==========================
-// UC-VENUE-GET-01
-// ==========================
+
 const getVenue = async (req, res) => {
   try {
     const { venueId } = req.params;
