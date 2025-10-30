@@ -40,9 +40,6 @@ app.use(cors(corsOptions));
 // =======================
 connectDB();
 
-// =======================
-// 🚀 Routes
-// =======================
 app.get("/", (req, res) => {
   res.json({
     ok: true,
@@ -56,6 +53,8 @@ app.use("/api/venues", require("./src/routes/venues"));
 app.use("/api", require("./src/routes/subPitches"));
 app.use("/api/holds", require("./src/routes/holds"));
 app.use("/api", require("./src/routes/ownerSlots"));
+app.use("/api/owner", require("./src/routes/owner"));
+app.use("/api/admin", require("./src/routes/admin"));
 
 // =======================
 // ⚠️ Error Handler
