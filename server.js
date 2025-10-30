@@ -32,7 +32,10 @@ app.use(cors(corsOptions));
 
 // API routes
 app.use("/api/auth", require("./src/routes/auth"));
-
+// === THÊM 2 DÒNG NÀY VÀO ===
+app.use("/api/owner", require("./src/routes/owner"));
+app.use("/api/admin", require("./src/routes/admin"));
+// ============================
 // Simple health endpoint to test connectivity from phone browser
 app.get("/", (req, res) => {
   res.json({ ok: true, service: "mma301_be", time: new Date().toISOString() });
