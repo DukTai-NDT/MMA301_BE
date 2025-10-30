@@ -7,14 +7,24 @@ const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body || {};
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "Thiếu name/email/password" });
+    if (!name || !email || !password ) {
+      // return res
+      //   .status(400)
+      //   .json({ message: "Thiếu name/email/password/phone" });
+        return res
+        .status(400)
+        .json({ message: "Thiếu name/email/password" });
     }
 
     const emailExisted = await User.findOne({ email }).lean();
     if (emailExisted) {
       return res.status(409).json({ message: "Email đã đăng ký." });
     }
+
+    // const phoneExisted = await User.findOne({ phone }).lean();
+    // if (phoneExisted) {
+    //   return res.status(409).json({ message: "Số điện thoại đã đăng ký." });
+    // }
 
     const passHash = await bcrypt.hash(password, 10);
     const user = await User.create({
