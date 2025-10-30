@@ -32,6 +32,7 @@ app.use(cors(corsOptions));
 
 // API routes
 app.use("/api/auth", require("./src/routes/auth"));
+app.use("/api/admin", require("./src/routes/admin"));
 
 // Simple health endpoint to test connectivity from phone browser
 app.get("/", (req, res) => {
