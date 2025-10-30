@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 exports.register = async (req, res) => {
   try {
     const { name, email, password, phone } = req.body || {};
-    if (!name || !email || !password || !phone) {
+    if (!name || !email || !password) {
       return res
         .status(400)
         .json({ message: "Thiếu name/email/password/phone" });
@@ -16,11 +16,6 @@ exports.register = async (req, res) => {
     const emailExisted = await User.findOne({ email }).lean();
     if (emailExisted) {
       return res.status(409).json({ message: "Email đã đăng ký." });
-    }
-
-    const phoneExisted = await User.findOne({ phone }).lean();
-    if (phoneExisted) {
-      return res.status(409).json({ message: "Số điện thoại đã đăng ký." });
     }
 
     const passHash = await bcrypt.hash(password, 10);
@@ -65,27 +60,29 @@ exports.login = async (req, res) => {
       JWT_SECRET,
       { expiresIn: "7d" }
     );
-// --- BẮT ĐẦU SỬA ---
 
-    // 1. Tạo đối tượng user để trả về, loại bỏ passHash
+    let primaryRole = "customer";
+    if (Array.isArray(user.roles)) {
+      if (user.roles.includes("admin")) primaryRole = "admin";
+      else if (user.roles.includes("owner")) primaryRole = "owner";
+      else if (user.roles.includes("customer")) primaryRole = "customer";
+      else if (user.roles.length > 0) primaryRole = user.roles[0];
+    }
+
     const userForClient = {
       id: user._id.toString(),
       email: user.email,
       name: user.name,
       phone: user.phone,
-      // QUAN TRỌNG: Chuyển mảng 'roles' thành một 'role' duy nhất
-      // (Giả sử lấy role đầu tiên làm role chính)
-      role: user.roles && user.roles.length > 0 ? user.roles[0] : "customer"
+      role: primaryRole,
+      roles: user.roles,
     };
 
-    // 2. Trả về cả token và user
-     return res.json({ 
-        message: "Đăng nhập thành công", 
-        token: token,
-        user: userForClient // <--- THÊM DÒNG NÀY
+    return res.json({
+      message: "Đăng nhập thành công",
+      token: token,
+      user: userForClient,
     });
-
-    // --- KẾT THÚC SỬA ---
   } catch (err) {
     console.error("login error:", err);
     return res.status(500).json({ message: "Lỗi máy chủ" });
