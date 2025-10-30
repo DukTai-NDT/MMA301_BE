@@ -56,6 +56,7 @@ app.use("/api/venues", require("./src/routes/venues"));
 app.use("/api", require("./src/routes/subPitches"));
 app.use("/api/holds", require("./src/routes/holds"));
 app.use("/api", require("./src/routes/ownerSlots"));
+app.use("/api/bookings", require("./src/routes/bookings"));
 
 // =======================
 // ⚠️ Error Handler
@@ -71,6 +72,4 @@ app.use((err, req, res, next) => {
 // 🔥 Start Server
 // =======================
 const PORT = process.env.PORT || 9999;
-app.listen(PORT, () =>
-  console.log(`🚀 Server running on port ${PORT}`)
-);
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
