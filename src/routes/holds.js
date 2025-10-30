@@ -1,6 +1,7 @@
 const express = require("express");
 const Joi = require("joi");
 const { createHold, deleteHold } = require("../controllers/holdController");
+const { authenticate } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -16,10 +17,10 @@ const holdSchema = Joi.object({
 }).xor("slotIndex", "startTime"); // phải có 1 trong 2
 
 // POST /holds
-router.post("/", async (req, res) => {
+// Requires authenticated user
+router.post("/", authenticate, async (req, res) => {
   const { error } = holdSchema.validate(req.body);
-  if (error)
-    return res.status(400).json({ message: error.details[0].message });
+  if (error) return res.status(400).json({ message: error.details[0].message });
   await createHold(req, res);
 });
 
@@ -28,10 +29,10 @@ const idSchema = Joi.object({
   id: Joi.string().length(24).required(),
 });
 
-router.delete("/:id", async (req, res) => {
+// Requires authenticated user
+router.delete("/:id", authenticate, async (req, res) => {
   const { error } = idSchema.validate(req.params);
-  if (error)
-    return res.status(400).json({ message: error.details[0].message });
+  if (error) return res.status(400).json({ message: error.details[0].message });
   await deleteHold(req, res);
 });
 
