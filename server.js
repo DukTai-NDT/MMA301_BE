@@ -35,6 +35,8 @@ app.use("/api/auth", require("./src/routes/auth"));
 // === THÊM 2 DÒNG NÀY VÀO ===
 app.use("/api/owner", require("./src/routes/owner"));
 app.use("/api/admin", require("./src/routes/admin"));
+// THÊM ROUTE MỚI CHO VIỆC RÚT TIỀN
+app.use("/api/withdrawals", require("./src/routes/withdrawal")); // <-- THÊM DÒNG NÀY
 // ============================
 // Simple health endpoint to test connectivity from phone browser
 app.get("/", (req, res) => {

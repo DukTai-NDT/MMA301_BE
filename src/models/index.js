@@ -7,4 +7,5 @@ module.exports = {
   SlotReservation: require("./SlotReservation"),
   Payment: require("./Payment"),
   Review: require("./Review"),
+  WithdrawalRequest: require("./WithdrawalRequest")
 };
