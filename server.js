@@ -55,6 +55,13 @@ app.use("/api/holds", require("./src/routes/holds"));
 app.use("/api", require("./src/routes/ownerSlots"));
 app.use("/api/owner", require("./src/routes/owner"));
 app.use("/api/admin", require("./src/routes/admin"));
+// THÊM ROUTE MỚI CHO VIỆC RÚT TIỀN
+app.use("/api/withdrawals", require("./src/routes/withdrawal")); // <-- THÊM DÒNG NÀY
+// ============================
+// Simple health endpoint to test connectivity from phone browser
+app.get("/", (req, res) => {
+  res.json({ ok: true, service: "mma301_be", time: new Date().toISOString() });
+});
 
 // =======================
 // ⚠️ Error Handler
