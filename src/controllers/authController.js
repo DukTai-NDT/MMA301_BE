@@ -65,7 +65,7 @@ exports.login = async (req, res) => {
       JWT_SECRET,
       { expiresIn: "7d" }
     );
-// --- BẮT ĐẦU SỬA ---
+    // --- BẮT ĐẦU SỬA ---
 
     // 1. Tạo đối tượng user để trả về, loại bỏ passHash
     const userForClient = {
@@ -75,14 +75,14 @@ exports.login = async (req, res) => {
       phone: user.phone,
       // QUAN TRỌNG: Chuyển mảng 'roles' thành một 'role' duy nhất
       // (Giả sử lấy role đầu tiên làm role chính)
-      role: user.roles && user.roles.length > 0 ? user.roles[0] : "customer"
+      role: user.roles && user.roles.length > 0 ? user.roles[0] : "customer",
     };
 
     // 2. Trả về cả token và user
-     return res.json({ 
-        message: "Đăng nhập thành công", 
-        token: token,
-        user: userForClient // <--- THÊM DÒNG NÀY
+    return res.json({
+      message: "Đăng nhập thành công",
+      token: token,
+      user: userForClient, // <--- THÊM DÒNG NÀY
     });
 
     // --- KẾT THÚC SỬA ---
