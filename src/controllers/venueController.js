@@ -18,8 +18,17 @@ const getMyVenues = async (req, res) => {
 // @route   POST /owner/venues
 const createVenue = async (req, res) => {
   try {
+    const files = req.files;
+    let imageUrls = [];
+    if (files && files.length > 0) {
+      // 'file.path' là đường dẫn mà Multer lưu file
+      // Ví dụ: "uploads/abc123xyz.jpg"
+      // (Xem lưu ý bên dưới)
+      imageUrls = files.map(file => file.path);
+    }
     const venueData = {
       ...req.body,
+      images: imageUrls,
       ownerId: req.user._id, // Tự động gán ownerId là user đang đăng nhập (giả lập)
     };
     
@@ -38,13 +47,42 @@ const createVenue = async (req, res) => {
 // @route   PUT /owner/venues/:id
 const updateVenue = async (req, res) => {
   const { id } = req.params;
-  const updateData = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({ message: 'Invalid Venue ID' });
   }
 
   try {
+    const updateData = { ...req.body };
+    if (req.files && req.files.length > 0) {
+      // TRƯỜNG HỢP 1: Có ảnh mới (Gửi bằng FormData)
+
+      // 2a. Lấy link ảnh MỚI từ Cloudinary (req.files)
+      const newImageUrls = req.files.map(file => file.path);
+
+      // 2b. Lấy link ảnh CŨ từ req.body.existingImages (frontend gửi)
+      let existingImageUrls = [];
+      if (req.body.existingImages) {
+        // Đảm bảo nó luôn là mảng, dù frontend gửi 1 hay nhiều link
+        existingImageUrls = Array.isArray(req.body.existingImages)
+          ? req.body.existingImages
+          : [req.body.existingImages];
+      }
+
+      // 2c. Gộp 2 mảng ảnh lại và GHI ĐÈ vào 'images' trong updateData
+      updateData.images = [...existingImageUrls, ...newImageUrls];
+      
+      // Xóa key 'existingImages' thừa (không bắt buộc nhưng nên làm)
+      delete updateData.existingImages; 
+
+    } else {
+      // TRƯỜNG HỢP 2: Không có ảnh mới (Gửi bằng JSON)
+      // Không cần làm gì cả. 
+      // 'updateData.images' đã là mảng ảnh cũ chính xác từ req.body
+    }
+
+
+
     const updatedVenue = await Venue.findOneAndUpdate(
       { _id: id, ownerId: req.user._id }, // Kiểm tra ID và ownerId (giả lập)
       { $set: updateData }, 

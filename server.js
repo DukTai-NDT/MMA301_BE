@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db.js");
-
+const path = require('path');
 const app = express();
 connectDB();
 
@@ -29,14 +29,16 @@ const corsOptions = {
   allowedHeaders: "Content-Type,Authorization",
 };
 app.use(cors(corsOptions));
-
 // API routes
 app.use("/api/auth", require("./src/routes/auth"));
 const venueRoutes = require('./src/routes/venue.js');
 const subPitchRoutes = require('./src/routes/subPitchRoutes.js');
+const reviewRoutes = require('./src/routes/reviewRoutes.js');
 
 app.use('/owner/venues', venueRoutes);
 app.use('/owner/sub-pitches', subPitchRoutes);
+app.use('/owner/reviews', reviewRoutes);
+
 // Simple health endpoint to test connectivity from phone browser
 app.get("/", (req, res) => {
   res.json({ ok: true, service: "mma301_be", time: new Date().toISOString() });
