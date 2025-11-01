@@ -14,12 +14,12 @@ const getOwnerSlots = async (req, res) => {
     if (!date)
       return res.status(400).json({ message: "Missing ?date=YYYY-MM-DD" });
 
-    // 1️⃣ Lấy thông tin sub_pitch
+    //  Lấy thông tin sub_pitch
     const subPitch = await SubPitch.findById(id).lean();
     if (!subPitch)
       return res.status(404).json({ message: "Sub-pitch not found" });
 
-    // 2️⃣ Lấy booking theo ngày & sân
+    //  Lấy booking theo ngày & sân
     const bookings = await Booking.find({
       subPitchId: id,
       date,
@@ -30,7 +30,7 @@ const getOwnerSlots = async (req, res) => {
     // Nếu bạn muốn kiểm tra có thật sự có dữ liệu
     console.log("🟢 Found bookings:", bookings.length);
 
-    // 3️⃣ Lấy danh sách hold (tạm giữ)
+    //  Lấy danh sách hold (tạm giữ)
     const holds = await SlotReservation.find({
       subPitchId: id,
       date,
@@ -39,7 +39,7 @@ const getOwnerSlots = async (req, res) => {
 
     console.log("🟡 Holds:", holds.length);
 
-    // 4️⃣ Ghép thông tin vào từng block
+    //  Ghép thông tin vào từng block
     const slots = subPitch.bookableBlocks.map((block) => {
       // Lấy các booking khớp startTime và endTime
       const blockBookings = bookings.filter(

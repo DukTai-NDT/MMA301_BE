@@ -1,86 +1,167 @@
-const mongoose = require("mongoose");
+// src/controllers/bookingsController.js
 const Booking = require("../models/Booking");
 const SubPitch = require("../models/SubPitch");
 const SlotReservation = require("../models/SlotReservation");
+ 
+
+//Helper: Convert "HH:MM" → số phút (để tính slotIndex)
+
+function hhmmToMinutes(hhmm) {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+
+//Tạo booking mới (trạng thái pending_payment)
 
 const createBooking = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
-    const { subPitchId, date, startTime, endTime, paymentOption } = req.body;
+    const { subPitchId, date, startTime, endTime, paymentOption, slotIndex } =
+      req.body;
 
     if (!subPitchId || !date || !startTime || !endTime || !paymentOption) {
       throw new Error("Missing required fields");
     }
 
     // 1️⃣ Kiểm tra sân con tồn tại
-    const subPitch = await SubPitch.findById(subPitchId).session(session);
+    const subPitch = await SubPitch.findById(subPitchId).lean();
     if (!subPitch) throw new Error("SubPitch not found");
 
-    const slotLabel = `${startTime}-${endTime}`;
+    // 2️⃣ Tính slotIndex (nếu không được gửi từ FE)
+    const finalSlotIndex = slotIndex ?? Math.floor(hhmmToMinutes(startTime) / 30);
 
-    // 2️⃣ Kiểm tra xung đột đặt sân
+    // 3️⃣ Tìm giá trong blockPrices
+    const slotLabelColon = `${startTime}-${endTime}`; // "13:00-15:00"
+    const slotLabelDash = `${startTime.split(":")[0]}-${endTime.split(":")[0]}`; // "13-15"
+
+    const keys = Object.keys(subPitch.blockPrices || {});
+    const matchedKey = keys.find(
+      (k) =>
+        k === slotLabelColon ||
+        k === slotLabelDash ||
+        k.replace(/\u003A/g, ":") === slotLabelColon
+    );
+
+    const price = matchedKey ? subPitch.blockPrices[matchedKey] : undefined;
+    if (!price) {
+      throw new Error(
+        `No price found for slot ${slotLabelColon} (keys: ${keys.join(", ")})`
+      );
+    }
+
+    // 4️⃣ Kiểm tra xung đột slot
     const conflict = await SlotReservation.findOne({
+      subPitchId,
+      date,
+      slotIndex: finalSlotIndex,
+      status: { $in: ["booked", "hold"] },
+    });
+    if (conflict) {
+      throw new Error("⛔ Slot is already held or booked by another user");
+    }
+
+    // 5️⃣ Tạo SlotReservation (trạng thái hold ban đầu)
+    const reservation = await SlotReservation.create({
+      subPitchId,
+      date,
+      slotIndex: finalSlotIndex,
+      startTime,
+      endTime,
+      status: "hold",
+      createdAt: new Date(),
+    });
+
+    // 6️⃣ Tạo Booking (pending_payment cho online)
+    const booking = await Booking.create({
       subPitchId,
       date,
       startTime,
       endTime,
-      status: { $in: ["booked", "hold"] },
-    }).session(session);
+      totalAmount: price,
+      paymentOption,
+      currency: "VND",
+      status: paymentOption === "pay_on_site" ? "confirmed" : "pending_payment",
+    });
 
-    if (conflict) {
-      throw new Error("Time slot already booked or held by another user");
-    }
+    // 7️⃣ Gắn liên kết ngược (bookingId vào reservation)
+    reservation.bookingId = booking._id;
+    await reservation.save();
 
-    // 3️⃣ Lấy giá từ blockPrices
-    const price = subPitch.blockPrices?.[slotLabel];
-    if (!price) throw new Error(`No price found for slot ${slotLabel}`);
-
-    // 4️⃣ Tạo SlotReservation (booked)
-    const [reservation] = await SlotReservation.create(
-      [
-        {
-          subPitchId,
-          date,
-          startTime,
-          endTime,
-          status: "booked",
-        },
-      ],
-      { session }
-    );
-
-    // 5️⃣ Tạo Booking
-    const [booking] = await Booking.create(
-      [
-        {
-          subPitchId,
-          reservationId: reservation._id,
-          date,
-          startTime,
-          endTime,
-          totalPrice: price,
-          paymentOption,
-          status: paymentOption === "cash" ? "confirmed" : "pending_payment",
-        },
-      ],
-      { session }
-    );
-
-    await session.commitTransaction();
-    session.endSession();
-
+    // ✅ Thành công
     res.status(201).json({
-      message: "Booking created successfully",
+      message: "✅ Booking created successfully",
+      holdId: reservation._id,
       booking,
     });
   } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
     console.error("❌ Error creating booking:", err);
     res.status(400).json({ message: err.message });
   }
 };
 
-module.exports = { createBooking };
+
+const confirmBooking = async (req, res) => {
+  try {
+    const { holdId } = req.params;
+    if (!holdId) return res.status(400).json({ message: "Thiếu holdId" });
+
+    //  Tìm SlotReservation (thay vì Hold)
+    const hold = await SlotReservation.findById(holdId);
+    if (!hold) return res.status(404).json({ message: "Không tìm thấy SlotReservation" });
+
+    if (hold.status !== "hold") {
+      return res.status(400).json({ message: "Slot đã hết hạn hoặc đã xử lý" });
+    }
+
+    //  Kiểm tra slot trùng
+    const conflict = await SlotReservation.findOne({
+      subPitchId: hold.subPitchId,
+      date: hold.date,
+      slotIndex: hold.slotIndex,
+      status: "booked",
+    });
+    if (conflict) {
+      return res
+        .status(400)
+        .json({ message: "Slot đã được đặt bởi người khác" });
+    }
+
+    //  Cập nhật SlotReservation thành booked
+    hold.status = "booked";
+    await hold.save();
+
+    //  Tạo Booking chính thức
+    const booking = await Booking.create({
+      userId: hold.userId || null, // nếu FE chưa truyền userId
+      subPitchId: hold.subPitchId,
+      date: hold.date,
+      startTime: hold.startTime || "",
+      endTime: hold.endTime || "",
+      status: "confirmed",
+      paymentOption: "online",
+      totalAmount: hold.amount || 0,
+      currency: "VND",
+      createdAt: new Date(),
+    });
+
+    hold.bookingId = booking._id;
+    await hold.save();
+
+    console.log(`✅ Booking confirmed for hold ${hold._id}`);
+    res.status(200).json({
+      message: "✅ Thanh toán & đặt sân thành công!",
+      booking,
+    });
+  } catch (err) {
+    console.error("❌ confirmBooking error:", err);
+    res.status(500).json({
+      message: "Lỗi xác nhận thanh toán",
+      error: err.message,
+    });
+  }
+};
+
+module.exports = {
+  createBooking,
+  confirmBooking,
+};
