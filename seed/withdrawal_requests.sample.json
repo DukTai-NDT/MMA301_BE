@@ -1,0 +1,136 @@
+[
+  {
+    "ownerId": { "$oid": "000000000000000000000000" },
+    "amount": 500000000,
+    "currency": "VND",
+    "status": "pending",
+    "bankInfo": {
+      "accountName": "NGUYEN VAN A",
+      "accountNumber": "0123456789",
+      "bankName": "Vietcombank"
+    },
+    "requestedAt": { "$date": "2025-10-10T03:21:00.000Z" }
+  },
+  {
+    "ownerId": { "$oid": "000000000000000000000000" },
+    "amount": 250000000,
+    "currency": "VND",
+    "status": "processing",
+    "bankInfo": {
+      "accountName": "TRAN THI B",
+      "accountNumber": "0987654321",
+      "bankName": "Techcombank"
+    },
+    "requestedAt": { "$date": "2025-10-15T09:00:00.000Z" },
+    "processedAt": { "$date": "2025-10-16T08:00:00.000Z" }
+  },
+  {
+    "ownerId": { "$oid": "000000000000000000000000" },
+    "amount": 120000000,
+    "currency": "VND",
+    "status": "success",
+    "bankInfo": {
+      "accountName": "LE VAN C",
+      "accountNumber": "123123123",
+      "bankName": "BIDV"
+    },
+    "processedBy": { "$oid": "000000000000000000000001" },
+    "requestedAt": { "$date": "2025-10-05T06:30:00.000Z" },
+    "processedAt": { "$date": "2025-10-05T10:15:00.000Z" }
+  },
+  {
+    "ownerId": { "$oid": "000000000000000000000000" },
+    "amount": 80000000,
+    "currency": "VND",
+    "status": "rejected",
+    "bankInfo": {
+      "accountName": "PHAM THI D",
+      "accountNumber": "222333444",
+      "bankName": "ACB"
+    },
+    "processedBy": { "$oid": "000000000000000000000001" },
+    "rejectionReason": "Số dư không đủ",
+    "requestedAt": { "$date": "2025-10-20T12:00:00.000Z" },
+    "processedAt": { "$date": "2025-10-20T14:45:00.000Z" }
+  },
+  {
+    "ownerId": { "$oid": "000000000000000000000000" },
+    "amount": 350000000,
+    "currency": "VND",
+    "status": "pending",
+    "bankInfo": {
+      "accountName": "DO VAN E",
+      "accountNumber": "555666777",
+      "bankName": "MB Bank"
+    },
+    "requestedAt": { "$date": "2025-10-25T15:20:00.000Z" }
+  },
+  {
+    "ownerId": { "$oid": "000000000000000000000000" },
+    "amount": 150000000,
+    "currency": "VND",
+    "status": "success",
+    "bankInfo": {
+      "accountName": "NGO THI F",
+      "accountNumber": "700800900",
+      "bankName": "VietinBank"
+    },
+    "processedBy": { "$oid": "000000000000000000000001" },
+    "requestedAt": { "$date": "2025-09-30T08:10:00.000Z" },
+    "processedAt": { "$date": "2025-09-30T09:00:00.000Z" }
+  },
+  {
+    "ownerId": { "$oid": "000000000000000000000000" },
+    "amount": 220000000,
+    "currency": "VND",
+    "status": "processing",
+    "bankInfo": {
+      "accountName": "PHAN VAN G",
+      "accountNumber": "888999000",
+      "bankName": "Sacombank"
+    },
+    "requestedAt": { "$date": "2025-10-28T10:05:00.000Z" },
+    "processedAt": { "$date": "2025-10-28T10:45:00.000Z" }
+  },
+  {
+    "ownerId": { "$oid": "000000000000000000000000" },
+    "amount": 90000000,
+    "currency": "VND",
+    "status": "rejected",
+    "bankInfo": {
+      "accountName": "VU THI H",
+      "accountNumber": "111222333",
+      "bankName": "TPBank"
+    },
+    "processedBy": { "$oid": "000000000000000000000001" },
+    "rejectionReason": "Thông tin ngân hàng không khớp",
+    "requestedAt": { "$date": "2025-10-18T11:40:00.000Z" },
+    "processedAt": { "$date": "2025-10-18T13:00:00.000Z" }
+  },
+  {
+    "ownerId": { "$oid": "000000000000000000000000" },
+    "amount": 600000000,
+    "currency": "VND",
+    "status": "pending",
+    "bankInfo": {
+      "accountName": "TRAN VAN I",
+      "accountNumber": "444555666",
+      "bankName": "Agribank"
+    },
+    "requestedAt": { "$date": "2025-10-29T07:50:00.000Z" }
+  },
+  {
+    "ownerId": { "$oid": "000000000000000000000000" },
+    "amount": 300000000,
+    "currency": "VND",
+    "status": "success",
+    "bankInfo": {
+      "accountName": "DINH THI K",
+      "accountNumber": "333444555",
+      "bankName": "SHB"
+    },
+    "processedBy": { "$oid": "000000000000000000000001" },
+    "requestedAt": { "$date": "2025-10-01T09:30:00.000Z" },
+    "processedAt": { "$date": "2025-10-01T10:10:00.000Z" }
+  }
+]
