@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db.js");
-
+const path = require('path');
 const app = express();
 
 // =======================
@@ -34,7 +34,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
 // =======================
 // 🗄️ Kết nối MongoDB
 // =======================
@@ -57,11 +56,17 @@ app.use("/api/owner", require("./src/routes/owner"));
 app.use("/api/admin", require("./src/routes/admin"));
 // THÊM ROUTE MỚI CHO VIỆC RÚT TIỀN
 app.use("/api/withdrawals", require("./src/routes/withdrawal")); // <-- THÊM DÒNG NÀY
+
+// Owner management routes (new) under /api/owner/*
+const ownerVenueRoutes = require('./src/routes/venue.js');
+const ownerSubPitchRoutes = require('./src/routes/subPitchRoutes.js');
+const ownerReviewRoutes = require('./src/routes/reviewRoutes.js');
+app.use('/api/owner/venues', ownerVenueRoutes);
+app.use('/api/owner/sub-pitches', ownerSubPitchRoutes);
+app.use('/api/owner/reviews', ownerReviewRoutes);
 // ============================
 // Simple health endpoint to test connectivity from phone browser
-app.get("/", (req, res) => {
-  res.json({ ok: true, service: "mma301_be", time: new Date().toISOString() });
-});
+// Note: health endpoint is already defined above; keep single definition only.
 
 // =======================
 // ⚠️ Error Handler
