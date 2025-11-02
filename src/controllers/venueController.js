@@ -5,9 +5,7 @@ const mongoose = require("mongoose");
 // Public: list venues with filters
 const listVenues = async (req, res) => {
   try {
-    const { search, type, lat, lng, radius, minPrice, maxPrice, minRating } =
-      req.query;
-
+    const { search, type, lat, lng, radius, minPrice, maxPrice, minRating } = req.query;
     const query = { status: "active" };
 
     if (search) query.$text = { $search: search };
@@ -40,10 +38,7 @@ const listVenues = async (req, res) => {
       },
     ]);
 
-    const priceMap = Object.fromEntries(
-      subPitches.map((sp) => [sp._id.toString(), sp])
-    );
-
+  const priceMap = Object.fromEntries(subPitches.map((sp) => [sp._id.toString(), sp]));
     let result = venues.map((v) => ({
       ...v,
       minPrice: priceMap[v._id.toString()]?.minPrice || 0,
@@ -63,15 +58,12 @@ const listVenues = async (req, res) => {
   }
 };
 
-// Public: get single venue and its sub-pitches
 const getVenue = async (req, res) => {
   try {
-    const { venueId } = req.params;
+    const { id: venueId } = req.params; // routes/venues.js uses :id
     const venue = await Venue.findById(venueId).lean();
 
-    if (!venue) {
-      return res.status(404).json({ message: "Venue not found" });
-    }
+    if (!venue) return res.status(404).json({ message: "Venue not found" });
 
     const subPitches = await SubPitch.find({ venueId }).lean();
 
@@ -218,6 +210,18 @@ const updateVenueStatus = async (req, res) => {
   }
 };
 
+// Public: get sub-pitches for a venue (for /api/venues/:id/sub-pitches)
+const getSubPitchesByVenue = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const subPitches = await SubPitch.find({ venueId: id });
+    res.json(subPitches);
+  } catch (err) {
+    console.error("❌ getSubPitchesByVenue error:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   listVenues,
   getVenue,
@@ -225,4 +229,5 @@ module.exports = {
   createVenue,
   updateVenue,
   updateVenueStatus,
+  getSubPitchesByVenue,
 };

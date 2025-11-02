@@ -31,7 +31,7 @@ exports.register = async (req, res) => {
     const user = await User.create({
       name,
       email,
-      phone: phone || undefined,
+  phone: phone || undefined,
       passHash,
       roles: ["customer"],
       status: "active",
