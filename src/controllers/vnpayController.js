@@ -2,7 +2,7 @@ const moment = require("moment");
 const qs = require("qs");
 const crypto = require("crypto");
 const config = require("../../config/vnpay");
-const SlotReservation  = require("../models/SlotReservation"); //  dùng để lấy subPitchId sau khi thanh toán
+const SlotReservation = require("../models/SlotReservation"); //  dùng để lấy subPitchId sau khi thanh toán
 
 // Hàm sort object chuẩn VNPay (encode + sort key)
 function sortObject(obj) {
@@ -79,7 +79,6 @@ exports.createPayment = async (req, res) => {
   }
 };
 
-
 //  Callback sau thanh toán (VNPay gọi về backend)
 
 exports.vnpayReturn = async (req, res) => {
@@ -134,12 +133,12 @@ exports.vnpayReturn = async (req, res) => {
       if (code === "00") {
         console.log("✅ Thanh toán thành công cho holdId:", holdId);
         hold.status = "booked"; // đổi từ hold -> booked
-        hold.paymentResult = "success"; 
+        hold.paymentResult = "success";
         hold.paymentTime = new Date();
         await hold.save();
       } else {
         console.log("❌ Thanh toán thất bại:", code);
-         hold.status = "hold"; // vẫn giữ vàng
+        hold.status = "hold"; // vẫn giữ vàng
         hold.held = true; // để FE hiểu là slot đang được giữ
         hold.paymentResult = "fail"; //  quan trọng để FE dừng refresh
         hold.paymentTime = new Date();
@@ -150,7 +149,7 @@ exports.vnpayReturn = async (req, res) => {
     }
 
     //  FE base URL: địa chỉ Expo Go
-    const FE_BASE = "exp://192.168.68.2:8081";
+    const FE_BASE = "exp://192.168.1.13:8081";
 
     const title =
       code === "00" ? "✅ Thanh toán thành công!" : "❌ Thanh toán thất bại!";
