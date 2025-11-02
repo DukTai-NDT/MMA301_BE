@@ -74,7 +74,7 @@ const hideReview = async (req, res) => {
     }
 };
 
-exports.submitReview = async (req, res) => {
+const submitReview = async (req, res) => {
     try {
         const { bookingId, rating, comment } = req.body;
         const userId = req.user.id;
@@ -165,5 +165,5 @@ exports.submitReview = async (req, res) => {
 module.exports = {
     listReviewsForSubPitch,
     hideReview,
-    submitReview,
+    submitReview
 };

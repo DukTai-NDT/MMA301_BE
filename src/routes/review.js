@@ -5,6 +5,6 @@ const { submitReview, getReviewsByVenue } = require("../controllers/reviewContro
 const { checkAuth } = require("../middleware/auth"); // JWT middleware
 
 router.post("/submit", checkAuth, submitReview);
-router.get("/venue/:venueId", getReviewsByVenue);
+// router.get("/venue/:venueId", getReviewsByVenue);
 
 module.exports = router;
