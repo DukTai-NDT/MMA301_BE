@@ -70,6 +70,9 @@ app.use("/api/holds", require("./src/routes/holds"));
 app.use("/api", require("./src/routes/ownerSlots"));
 app.use("/api/owner", require("./src/routes/owner"));
 app.use("/api/admin", require("./src/routes/admin"));
+
+app.use("/api/reviews", require("./src/routes/review"));
+
 // THÊM ROUTE MỚI CHO VIỆC RÚT TIỀN
 app.use("/api/withdrawals", require("./src/routes/withdrawal")); // <-- THÊM DÒNG NÀY
 
