@@ -1,34 +1,65 @@
+const mongoose = require("mongoose");
 const SlotReservation = require("../models/SlotReservation");
+const SubPitch = require("../models/SubPitch"); //  cần để lấy thông tin block & giá
 
-// 🟢 Tạo Hold (giữ slot tạm thời 10 phút)
+//  Tạo Hold (giữ slot tạm thời 10 phút)
 exports.createHold = async (req, res) => {
   try {
     const { subPitchId, date, slotIndex } = req.body;
 
-    //  Kiểm tra đầu vào
+    //  Giả định: userId lấy từ token (nếu chưa có auth middleware → fake tạm)
+    const userId =
+      req.user?._id || new mongoose.Types.ObjectId("673100000000000000000000");
+
+    //  Validate input
     if (!subPitchId || !date || slotIndex === undefined) {
       return res.status(400).json({ message: "Thiếu thông tin bắt buộc" });
     }
 
-    //  Kiểm tra trùng lặp
+    //  Kiểm tra slot đã được giữ hoặc đặt chưa
     const existed = await SlotReservation.findOne({
       subPitchId,
       date,
       slotIndex,
       status: { $in: ["hold", "booked"] },
     });
-
     if (existed) {
-      return res.status(400).json({ message: "Slot đã được giữ hoặc đặt" });
+      return res
+        .status(400)
+        .json({ message: "❌ Slot đã được giữ hoặc đặt, vui lòng chọn slot khác" });
     }
 
-    //  Tạo mới record hold (10 phút TTL)
+    //  Lấy thông tin SubPitch
+    const subPitch = await SubPitch.findById(subPitchId);
+    if (!subPitch) {
+      return res.status(404).json({ message: "Không tìm thấy subPitch" });
+    }
+
+    //  Lấy block tương ứng theo index
+    const selectedBlock = subPitch.bookableBlocks?.[slotIndex];
+    if (!selectedBlock) {
+      return res.status(400).json({ message: "Không tìm thấy slotIndex hợp lệ" });
+    }
+
+    //  Lấy giá từ blockPrices (key: "HH:MM-HH:MM")
+    const blockKey = `${selectedBlock.start}-${selectedBlock.end}`;
+    const price = subPitch.blockPrices?.get(blockKey) || 0;
+
+    //  TTL: 10 phút kể từ bây giờ
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    //  Tạo mới SlotReservation (hold)
     const hold = await SlotReservation.create({
       subPitchId,
       date,
       slotIndex,
+      userId,
       status: "hold",
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      start: selectedBlock.start,
+      end: selectedBlock.end,
+      price,
+      paymentResult: "pending",
+      expiresAt,
     });
 
     console.log("✅ Đã tạo hold:", hold._id);
@@ -43,7 +74,7 @@ exports.createHold = async (req, res) => {
   }
 };
 
-// Hủy hold thủ công (nếu cần)
+//  Hủy hold thủ công (nếu cần)
 exports.deleteHold = async (req, res) => {
   try {
     const deleted = await SlotReservation.findByIdAndDelete(req.params.id);

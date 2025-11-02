@@ -3,6 +3,7 @@ const qs = require("qs");
 const crypto = require("crypto");
 const config = require("../../config/vnpay");
 const SlotReservation = require("../models/SlotReservation"); //  dùng để lấy subPitchId sau khi thanh toán
+const Booking = require("../models/Booking");
 
 // Hàm sort object chuẩn VNPay (encode + sort key)
 function sortObject(obj) {
@@ -36,7 +37,7 @@ exports.createPayment = async (req, res) => {
     if (!amount || !holdId)
       return res.status(400).json({ message: "Thiếu thông tin thanh toán" });
 
-    // ✅ VNPay callback sẽ gọi về backend /api/vnpay/return
+    // VNPay callback sẽ gọi về backend /api/vnpay/return
     // backend sẽ redirect về FE
     const returnUrlWithHoldId = `${vnp_ReturnUrl}?holdId=${holdId}`;
 
@@ -47,7 +48,7 @@ exports.createPayment = async (req, res) => {
       vnp_Locale: "vn",
       vnp_CurrCode: "VND",
       vnp_TxnRef: orderId,
-      vnp_OrderInfo: `Thanh toán sân bóng (${holdId})`,
+      vnp_OrderInfo: `Thanh toán sân bóng (holdId=${holdId})`,
       vnp_OrderType: "billpayment",
       vnp_Amount: amount * 100, // VNPay yêu cầu nhân 100
       vnp_ReturnUrl: returnUrlWithHoldId,
@@ -98,8 +99,17 @@ exports.vnpayReturn = async (req, res) => {
     delete rawParams["vnp_SecureHash"];
     delete rawParams["vnp_SecureHashType"];
 
-    const holdId = rawParams["holdId"];
-    delete rawParams["holdId"];
+    // 🔍 Lấy holdId từ vnp_OrderInfo (VNPay không trả holdId trong query)
+    let holdId = null;
+    const orderInfo = decodeURIComponent(rawParams["vnp_OrderInfo"] || "");
+    const match = orderInfo.match(/holdId=([a-f0-9]{24})/); // regex cho ObjectId 24 ký tự
+    if (match) {
+      holdId = match[1];
+      console.log("✅ Trích xuất holdId từ vnp_OrderInfo:", holdId);
+    } else {
+      console.log("⚠️ Không tìm thấy holdId trong vnp_OrderInfo:", orderInfo);
+    }
+
 
     // Sort lại các param VNPay
     const sortedRaw = {};
@@ -126,7 +136,6 @@ exports.vnpayReturn = async (req, res) => {
 
     const code = rawParams["vnp_ResponseCode"];
     const hold = holdId ? await SlotReservation.findById(holdId) : null;
-
     if (!hold) {
       console.log("⚠️ Không tìm thấy SlotReservation với holdId:", holdId);
     } else {
@@ -136,6 +145,32 @@ exports.vnpayReturn = async (req, res) => {
         hold.paymentResult = "success";
         hold.paymentTime = new Date();
         await hold.save();
+
+        // Tạo booking mới nếu chưa có
+        const qr = `QR-${hold._id}`;
+        const existingBooking = await Booking.findOne({ qrToken: qr });
+
+        if (!existingBooking) {
+          const booking = new Booking({
+            userId: hold.userId,
+            subPitchId: hold.subPitchId,
+            date: hold.date,
+            startTime: hold.start,
+            endTime: hold.end,
+            status: "completed",
+            paymentOption: "deposit_online",
+            depositPercent: 0.3,
+            totalAmount: hold.price || hold.amount || 0,
+            currency: "VND",
+            qrToken: qr,
+            createdAt: new Date(),
+          });
+
+          await booking.save();
+          console.log("🟢 Booking mới được lưu:", booking._id);
+        } else {
+          console.log("⚠️ Booking đã tồn tại, bỏ qua tạo mới");
+        }
       } else {
         console.log("❌ Thanh toán thất bại:", code);
         hold.status = "hold"; // vẫn giữ vàng
@@ -149,7 +184,7 @@ exports.vnpayReturn = async (req, res) => {
     }
 
     //  FE base URL: địa chỉ Expo Go
-    const FE_BASE = "exp://192.168.1.13:8081";
+    const FE_BASE = "exp://192.168.68.2:8081";
 
     const title =
       code === "00" ? "✅ Thanh toán thành công!" : "❌ Thanh toán thất bại!";
