@@ -47,4 +47,22 @@ function formatOTPEmail(code, purpose) {
   };
 }
 
-module.exports = { sendMail, formatOTPEmail };
+function getTransporter() {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: Number(SMTP_PORT || 587),
+      secure: String(SMTP_SECURE || "false").toLowerCase() === "true",
+      auth:
+        SMTP_USER && SMTP_PASS
+          ? { user: SMTP_USER, pass: SMTP_PASS }
+          : undefined,
+      tls: {
+        rejectUnauthorized: false, // ✅ Thêm dòng này để bỏ qua lỗi SSL khi chạy local
+      },
+    });
+  }
+  return transporter;
+}
+
+module.exports = { sendMail, formatOTPEmail, getTransporter };
