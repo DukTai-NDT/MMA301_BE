@@ -14,6 +14,15 @@ const UserSchema = new mongoose.Schema(
     },
     phone: { type: String, trim: true },
     passHash: { type: String, required: true },
+    emailVerified: { type: Boolean, required: true, default: false },
+    // Email verification OTP
+    verificationOTP: { type: String, trim: true },
+    verificationExpiresAt: { type: Date },
+    // Password reset OTP
+    resetOTP: { type: String, trim: true },
+    resetExpiresAt: { type: Date },
+    // last time we sent any OTP (for basic rate limit)
+    otpLastSentAt: { type: Date },
     roles: {
       type: [
         {

@@ -12,6 +12,11 @@ const SlotReservationSchema = new mongoose.Schema(
     date: { type: String, match: DateRegex, required: true },
     slotIndex: { type: Number, min: 0, required: true },
     status: { type: String, enum: ["hold", "booked"], required: true },
+    paymentResult: {
+      type: String,
+      enum: ["pending", "success", "fail", null],
+      default: "pending",
+    },
     bookingId: { type: mongoose.Schema.Types.ObjectId, ref: "Booking" },
     expiresAt: { type: Date },
   },
