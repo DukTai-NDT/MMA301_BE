@@ -18,7 +18,8 @@ const createBooking = async (req, res) => {
   try {
     const { subPitchId, date, startTime, endTime, paymentOption, slotIndex } =
       req.body;
-
+    const userId = req.user?.sub;
+    if (!userId) throw new Error("Unauthorized: missing user info");
     if (!subPitchId || !date || !startTime || !endTime || !paymentOption) {
       throw new Error("Missing required fields");
     }
@@ -67,12 +68,14 @@ const createBooking = async (req, res) => {
       slotIndex: finalSlotIndex,
       startTime,
       endTime,
+      userId,
       status: "hold",
       createdAt: new Date(),
     });
 
     // 6️⃣ Tạo Booking (pending_payment cho online)
     const booking = await Booking.create({
+      userId,
       subPitchId,
       date,
       startTime,
@@ -103,8 +106,9 @@ const createBooking = async (req, res) => {
 const confirmBooking = async (req, res) => {
   try {
     const { holdId } = req.params;
+    const currentUserId = req.user?.sub;
     if (!holdId) return res.status(400).json({ message: "Thiếu holdId" });
-
+    if (!currentUserId) return res.status(401).json({ message: "Unauthorized user" });
     //  Tìm SlotReservation (thay vì Hold)
     const hold = await SlotReservation.findById(holdId);
     if (!hold) return res.status(404).json({ message: "Không tìm thấy SlotReservation" });
@@ -132,7 +136,7 @@ const confirmBooking = async (req, res) => {
 
     //  Tạo Booking chính thức
     const booking = await Booking.create({
-      userId: hold.userId || null, // nếu FE chưa truyền userId
+      userId: hold.userId, // nếu FE chưa truyền userId
       subPitchId: hold.subPitchId,
       date: hold.date,
       startTime: hold.startTime || "",
