@@ -8,8 +8,12 @@ exports.createHold = async (req, res) => {
     const { subPitchId, date, slotIndex } = req.body;
 
     //  Giả định: userId lấy từ token (nếu chưa có auth middleware → fake tạm)
-    const userId =
-      req.user?._id || new mongoose.Types.ObjectId("673100000000000000000000");
+    const userId = req.user?.sub;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized: Missing userId from token" });
+    }
+
 
     //  Validate input
     if (!subPitchId || !date || slotIndex === undefined) {

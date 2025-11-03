@@ -11,7 +11,7 @@ const Booking = require("../models/Booking");
 router.post("/", createBooking);
 
 //  Xác nhận thanh toán (VNPay → FE → BE)
-router.post("/confirm/:holdId", confirmBooking);
+router.post("/confirm/:holdId", checkAuth, confirmBooking);
 
 // routes/bookings.js
 router.get("/check-latest-booked", checkAuth, async (req, res) => {
