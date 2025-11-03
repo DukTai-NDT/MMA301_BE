@@ -11,7 +11,7 @@ const { getBookingsByCustomer } = require("../controllers/bookingsController");
 router.post("/", createBooking);
 
 //  Xác nhận thanh toán (VNPay → FE → BE)
-router.post("/confirm/:holdId", confirmBooking);
+router.post("/confirm/:holdId", checkAuth, confirmBooking);
 
 //  Lấy danh sách booking của customer
 router.get("/customer/:userId", getBookingsByCustomer);
