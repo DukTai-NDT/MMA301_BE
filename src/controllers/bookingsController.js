@@ -2,7 +2,7 @@
 const Booking = require("../models/Booking");
 const SubPitch = require("../models/SubPitch");
 const SlotReservation = require("../models/SlotReservation");
- 
+
 
 //Helper: Convert "HH:MM" → số phút (để tính slotIndex)
 
@@ -161,7 +161,65 @@ const confirmBooking = async (req, res) => {
   }
 };
 
+// Danh sách booking của customer
+const getBookingsByCustomer = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: "Thiếu userId" });
+    }
+
+    // 🔍 Tìm tất cả booking của user (mới nhất trước)
+    const bookings = await Booking.find({ userId })
+      .populate({
+        path: "subPitchId",
+        select: "name venueId blockPrices",
+        populate: {
+          path: "venueId",
+          select: "name address images",
+        },
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (!bookings || bookings.length === 0) {
+      return res.status(404).json({ message: "Không có booking nào" });
+    }
+
+    // 🧾 Chuẩn hóa dữ liệu trả về
+    const formatted = bookings.map((b) => ({
+      bookingId: b._id,
+      date: b.date,
+      startTime: b.startTime,
+      endTime: b.endTime,
+      totalAmount: b.totalAmount,
+      status: b.status,
+      paymentOption: b.paymentOption,
+      subPitch: b.subPitchId?.name || "N/A",
+      pitch: b.subPitchId?.venueId?.name || "N/A",
+      address: b.subPitchId?.venueId?.address || "N/A",
+      images: b.subPitchId?.venueId?.images || [],
+      createdAt: b.createdAt,
+    }));
+
+    res.status(200).json({
+      message: "✅ Lấy danh sách booking thành công",
+      bookings: formatted,
+    });
+  } catch (err) {
+    console.error("❌ getBookingsByCustomer error:", err);
+    res.status(500).json({
+      message: "Lỗi khi lấy danh sách booking",
+      error: err.message,
+    });
+  }
+};
+
+
+
 module.exports = {
   createBooking,
   confirmBooking,
+  getBookingsByCustomer
 };
