@@ -6,12 +6,15 @@ const {
 } = require("../controllers/bookingsController");
 const { checkAuth } = require("../middleware/auth");
 const Booking = require("../models/Booking");
-
+const { getBookingsByCustomer } = require("../controllers/bookingsController");
 //  Tạo booking mới
 router.post("/", createBooking);
 
 //  Xác nhận thanh toán (VNPay → FE → BE)
 router.post("/confirm/:holdId", confirmBooking);
+
+//  Lấy danh sách booking của customer
+router.get("/customer/:userId", getBookingsByCustomer);
 
 // routes/bookings.js
 router.get("/check-latest-booked", checkAuth, async (req, res) => {
