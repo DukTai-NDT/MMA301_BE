@@ -110,6 +110,7 @@ exports.vnpayReturn = async (req, res) => {
       console.log("⚠️ Không tìm thấy holdId trong vnp_OrderInfo:", orderInfo);
     }
 
+
     // Sort lại các param VNPay
     const sortedRaw = {};
     Object.keys(rawParams)
@@ -183,7 +184,7 @@ exports.vnpayReturn = async (req, res) => {
     }
 
     //  FE base URL: địa chỉ Expo Go
-    const FE_BASE = "exp://192.168.1.104:8081";
+    const FE_BASE = "exp://192.168.1.100:8081";
 
     const title =
       code === "00" ? "✅ Thanh toán thành công!" : "❌ Thanh toán thất bại!";
