@@ -207,10 +207,7 @@ const getBookingsByCustomer = async (req, res) => {
       createdAt: b.createdAt,
     }));
 
-    res.status(200).json({
-      message: "✅ Lấy danh sách booking thành công",
-      bookings: formatted,
-    });
+    res.status(200).json(formatted);
   } catch (err) {
     console.error("❌ getBookingsByCustomer error:", err);
     res.status(500).json({
