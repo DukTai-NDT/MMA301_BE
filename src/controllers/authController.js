@@ -14,7 +14,7 @@ function genOTP(len = 6) {
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body || {};
+    const { name, email, password, phone, role } = req.body || {};
     if (!name || !email || !password) {
       return res.status(400).json({ message: "Thiếu name/email/password" });
     }
@@ -28,12 +28,15 @@ exports.register = async (req, res) => {
     const verifyCode = genOTP(6);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
+    // Accept only 'customer' or 'owner' from client. Default to customer.
+    const chosenRole = role === "owner" ? "owner" : "customer";
+
     const user = await User.create({
       name,
       email,
       phone: phone || undefined,
       passHash,
-      roles: ["customer"],
+      roles: [chosenRole],
       status: "active",
       emailVerified: false,
       verificationOTP: verifyCode,
@@ -76,11 +79,9 @@ exports.login = async (req, res) => {
     }
 
     if (!user.emailVerified) {
-      return res
-        .status(403)
-        .json({
-          message: "Email chưa được xác minh. Vui lòng kiểm tra email.",
-        });
+      return res.status(403).json({
+        message: "Email chưa được xác minh. Vui lòng kiểm tra email.",
+      });
     }
 
     const token = jwt.sign(
@@ -262,6 +263,35 @@ exports.resetPassword = async (req, res) => {
     return res.json({ message: "Đặt lại mật khẩu thành công" });
   } catch (err) {
     console.error("resetPassword error:", err);
+    return res.status(500).json({ message: "Lỗi máy chủ" });
+  }
+};
+
+// Change password for authenticated user
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword)
+      return res
+        .status(400)
+        .json({ message: "Thiếu currentPassword hoặc newPassword" });
+
+    const userId = req.user && req.user.sub;
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+    const user = await User.findById(userId);
+    if (!user)
+      return res.status(404).json({ message: "Không tìm thấy tài khoản" });
+
+    const ok = await require("bcrypt").compare(currentPassword, user.passHash);
+    if (!ok)
+      return res.status(400).json({ message: "Mật khẩu hiện tại không đúng" });
+
+    user.passHash = await require("bcrypt").hash(newPassword, 10);
+    await user.save();
+    return res.json({ message: "Đổi mật khẩu thành công" });
+  } catch (err) {
+    console.error("changePassword error:", err);
     return res.status(500).json({ message: "Lỗi máy chủ" });
   }
 };
