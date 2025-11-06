@@ -183,7 +183,7 @@ exports.vnpayReturn = async (req, res) => {
     }
 
     //  FE base URL: địa chỉ Expo Go
-    const FE_BASE = "exp://192.168.0.119:8081";
+    const FE_BASE = "exp://192.168.137.161:8081";
 
     const title =
       code === "00" ? "✅ Thanh toán thành công!" : "❌ Thanh toán thất bại!";
