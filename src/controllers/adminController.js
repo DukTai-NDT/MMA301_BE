@@ -31,35 +31,36 @@ const getSafeDateRange = (query) => {
 exports.getDashboard = async (req, res) => {
   try {
     const { from, to } = getSafeDateRange(req.query);
+// 1. Thống kê doanh thu (theo ngày)
+const revenueChart = await Booking.aggregate([
+  {
+    $match: {
+      status: "completed", // Lọc các booking đã hoàn thành
+      createdAt: { $gte: from, $lte: to },
+    },
+  },
+  {
+    $group: {
+      _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+      // SỬA Ở ĐÂY: Sử dụng đúng tên trường 'totalAmount'
+      dailyRevenue: { $sum: "$totalAmount" },
+    },
+  },
+  { $sort: { _id: 1 } },
+  {
+    $project: {
+      date: "$_id",
+      revenue: "$dailyRevenue",
+      _id: 0,
+    },
+  },
+]);
 
-    // 1. Thống kê doanh thu (theo ngày)
-    const revenueChart = await Payment.aggregate([
-      {
-        $match: {
-          status: "paid",
-          createdAt: { $gte: from, $lte: to },
-        },
-      },
-      {
-        $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          dailyRevenue: { $sum: "$amount" },
-        },
-      },
-      { $sort: { _id: 1 } },
-      {
-        $project: {
-          date: "$_id",
-          revenue: "$dailyRevenue",
-          _id: 0,
-        },
-      },
-    ]);
-
-    const totalRevenue = revenueChart.reduce(
-      (acc, curr) => acc + curr.revenue,
-      0
-    );
+// Đoạn code này giữ nguyên, nó sẽ tự động tính tổng từ kết quả bên trên
+const totalRevenue = revenueChart.reduce(
+  (acc, curr) => acc + curr.revenue,
+  0
+);
 
     // 2. Thống kê Lịch đặt (TẤT CẢ TRẠNG THÁI) - THAY ĐỔI
     const bookingStats = await Booking.aggregate([
