@@ -32,10 +32,17 @@ const corsOptions = {
       "http://localhost:3000",
       "http://localhost:5173",
       "http://localhost:8081",
+<<<<<<< HEAD
       "http://192.168.1.104:5173", // LAN web
       "http://192.168.1.104:3000", // LAN web khác
       "exp://192.168.1.104:19000", // Expo LAN
       "exp://192.168.1.104:19001", // Expo dev tools
+=======
+      "http://10.33.70.36:5173", // LAN web
+      "http://10.33.70.36:3000", // LAN web khác
+      "exp://10.33.70.36:19000", // Expo LAN
+      "exp://10.33.70.36:19001", // Expo dev tools
+>>>>>>> 26ff7129e0f4b3f336ff6a55841007a1e5e8abeb
     ];
 
     if (allowed.includes(origin)) {
