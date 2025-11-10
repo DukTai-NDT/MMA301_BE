@@ -7,7 +7,7 @@ const Venue = require("../models/Venue");
 exports.listOwnerBookings = async (req, res) => {
   try {
     const { from, to, status, paymentOption } = req.query;
-    const ownerId = req.user._id; // ✅ lấy từ token
+    const ownerId = req.user.sub;
 
     console.log(">>> Owner ID:", ownerId);
 
