@@ -2,26 +2,54 @@ const Venue = require("../models/Venue");
 const SubPitch = require("../models/SubPitch");
 const mongoose = require("mongoose");
 
-// Public: list venues with filters
+// Public: list venues with filters (supports nearby radius search)
 const listVenues = async (req, res) => {
   try {
-    const { search, type, lat, lng, radius, minPrice, maxPrice, minRating } = req.query;
-    const query = { status: "active" };
+    const { search, type, lat, lng, radius, minPrice, maxPrice, minRating } =
+      req.query;
+    const matchBase = { status: "active" };
+    if (minRating) matchBase.ratingAvg = { $gte: Number(minRating) };
 
-    if (search) query.$text = { $search: search };
-    if (minRating) query.ratingAvg = { $gte: Number(minRating) };
-    if (lat && lng && radius) {
-      query.location = {
-        $geoWithin: {
-          $centerSphere: [
-            [parseFloat(lng), parseFloat(lat)],
-            parseFloat(radius) / 6378.1,
-          ],
-        },
+    const hasLocation = lat && lng;
+    const radiusKm = radius ? Number(radius) : 20; // default 20km
+
+    let venues = [];
+
+    if (hasLocation) {
+      // Use aggregation with $geoNear to compute distance (km) and sort by nearest
+      const nearPoint = {
+        type: "Point",
+        coordinates: [parseFloat(lng), parseFloat(lat)],
       };
+
+      const pipeline = [
+        {
+          $geoNear: {
+            near: nearPoint,
+            spherical: true,
+            distanceField: "distance", // in meters by default
+            distanceMultiplier: 0.001, // convert to km
+            maxDistance: radiusKm * 1000, // meters
+            query: matchBase,
+          },
+        },
+      ];
+
+      // Apply text search after $geoNear if provided (Mongo restricts $text inside $geoNear in some versions)
+      if (search) {
+        pipeline.push({ $match: { $text: { $search: search } } });
+      }
+
+      pipeline.push({ $sort: { distance: 1 } });
+
+      venues = await Venue.aggregate(pipeline).exec();
+    } else {
+      // Fallback: normal find + optional text search
+      const query = { ...matchBase };
+      if (search) query.$text = { $search: search };
+      venues = await Venue.find(query).lean();
     }
 
-    const venues = await Venue.find(query).lean();
     if (!venues.length) return res.json([]);
 
     const venueIds = venues.map((v) => v._id);
@@ -38,7 +66,9 @@ const listVenues = async (req, res) => {
       },
     ]);
 
-  const priceMap = Object.fromEntries(subPitches.map((sp) => [sp._id.toString(), sp]));
+    const priceMap = Object.fromEntries(
+      subPitches.map((sp) => [sp._id.toString(), sp])
+    );
     let result = venues.map((v) => ({
       ...v,
       minPrice: priceMap[v._id.toString()]?.minPrice || 0,
@@ -49,6 +79,13 @@ const listVenues = async (req, res) => {
       const min = minPrice ? Number(minPrice) : 0;
       const max = maxPrice ? Number(maxPrice) : Infinity;
       result = result.filter((v) => v.maxPrice >= min && v.minPrice <= max);
+    }
+
+    // If distance was computed, ensure results remain sorted by distance
+    if (hasLocation) {
+      result.sort(
+        (a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity)
+      );
     }
 
     res.json(result);
