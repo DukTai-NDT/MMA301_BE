@@ -10,33 +10,68 @@ const modelDefiners = [
 modelDefiners.forEach((defineModel) => defineModel(sequelize));
 const { User, Category, Room, RoomParticipant, Message } = sequelize.models;
 const applyAssociations = () => {
-  // Category - Room
-  Category.hasMany(Room, { foreignKey: "category_id" });
-  Room.belongsTo(Category, { foreignKey: "category_id" });
+  Category.hasMany(Room, {
+    foreignKey: "category_id",
+    as: "rooms",
+  });
 
-  // User - Room (owner)
-  User.hasMany(Room, { foreignKey: "owner_id" });
-  Room.belongsTo(User, { foreignKey: "owner_id" });
+  Room.belongsTo(Category, {
+    foreignKey: "category_id",
+    as: "category",
+  });
 
-  // User - RoomParticipant
-  User.hasMany(RoomParticipant, { foreignKey: "user_id" });
-  RoomParticipant.belongsTo(User, { foreignKey: "user_id" });
+  User.hasMany(Room, {
+    foreignKey: "owner_id",
+    as: "ownedRooms",
+  });
 
-  // Room - RoomParticipant
-  Room.hasMany(RoomParticipant, { foreignKey: "room_id" });
-  RoomParticipant.belongsTo(Room, { foreignKey: "room_id" });
+  Room.belongsTo(User, {
+    foreignKey: "owner_id",
+    as: "owner",
+  });
 
-  // User - Message
-  User.hasMany(Message, { foreignKey: "user_id" });
-  Message.belongsTo(User, { foreignKey: "user_id" });
+  User.hasMany(RoomParticipant, {
+    foreignKey: "user_id",
+    as: "roomParticipations",
+  });
 
-  // Room - Message
-  Room.hasMany(Message, { foreignKey: "room_id" });
-  Message.belongsTo(Room, { foreignKey: "room_id" });
+  RoomParticipant.belongsTo(User, {
+    foreignKey: "user_id",
+    as: "user",
+  });
 
-  // Message reply (self reference)
+  Room.hasMany(RoomParticipant, {
+    foreignKey: "room_id",
+    as: "participants",
+  });
+
+  RoomParticipant.belongsTo(Room, {
+    foreignKey: "room_id",
+    as: "room",
+  });
+
+  User.hasMany(Message, {
+    foreignKey: "user_id",
+    as: "messages",
+  });
+
+  Message.belongsTo(User, {
+    foreignKey: "user_id",
+    as: "sender",
+  });
+
+  Room.hasMany(Message, {
+    foreignKey: "room_id",
+    as: "messages",
+  });
+
+  Message.belongsTo(Room, {
+    foreignKey: "room_id",
+    as: "room",
+  });
+
   Message.belongsTo(Message, {
-    as: "reply_message",
+    as: "replyMessage",
     foreignKey: "reply_message_id",
   });
 };
